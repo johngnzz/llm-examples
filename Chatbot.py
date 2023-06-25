@@ -1,37 +1,30 @@
-import openai
+import requests
+import json
 import streamlit as st
-from streamlit_chat import message
 
-with st.sidebar:
-    openai_api_key = st.text_input('OpenAI API Key',key='chatbot_api_key')
-    "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
-    "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
+# URL to send the request to
+url = 'https://www.chatbase.co/api/v1/chat'
 
-st.title("💬 Streamlit GPT")
-#openai.api_key = st.secrets.openai_api_key
-if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+# Request headers
+headers = {
+    'accept': 'application/json',
+    'content-type': 'application/json',
+    'authorization': 'Bearer b89dea28-1595-479c-a3cc-f01629bac4a0'
+}
 
-with st.form("chat_input", clear_on_submit=True):
-    a, b = st.columns([4, 1])
-    user_input = a.text_input(
-        label="Your message:",
-        placeholder="What would you like to say?",
-        label_visibility="collapsed",
-    )
-    b.form_submit_button("Send", use_container_width=True)
+# Request body
+body = json.dumps({
+    'stream': False,
+    'temperature': 0,
+    'model': 'gpt-3.5-turbo'
+})
 
-for msg in st.session_state.messages:
-    message(msg["content"], is_user=msg["role"] == "user")
+# Send the request
+response = requests.post(url, headers=headers, data=body)
 
-if user_input and not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.")
-    
-if user_input and openai_api_key:
-    openai.api_key = openai_api_key
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    message(user_input, is_user=True)
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
-    msg = response.choices[0].message
-    st.session_state.messages.append(msg)
-    message(msg.content)
+# Parse the response
+response_json = response.json()
+
+# Print the response
+st.write(response_json)
+
